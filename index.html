@@ -1,363 +1,214 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบบริหารหนี้ (Sync Webhook)</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Sarabun', sans-serif; background-color: #f8fafc; color: #1e293b; }
-        .card { background-color: #ffffff; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 1.5rem; }
-        .input-field { width: 100%; padding: 0.5rem 1rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 1rem; }
-        .input-field:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
-        .tab-btn { padding: 0.75rem 1.5rem; font-weight: 600; cursor: pointer; transition: all 0.3s; border-bottom: 3px solid transparent; }
-        .tab-active { border-bottom-color: #3b82f6; color: #1d4ed8; }
-        .tab-inactive { color: #64748b; }
-        .tab-inactive:hover { color: #3b82f6; }
-    </style>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NT Co-op Debt Tracker — ดอกเบี้ยรายวัน</title>
+<style>
+:root{color-scheme:light;--ink:#172b45;--muted:#60728a;--blue:#2563eb;--line:#dce5ef;--bg:#f4f7fb}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.65 Tahoma,"Sarabun",sans-serif}main{max-width:1160px;margin:auto;padding:28px 20px 60px}header{background:#12243b;color:white;border-radius:20px;padding:30px;margin-bottom:20px}header p{color:#bdcde0;margin:4px 0}h1{font-size:28px;margin:0;color:#ffd271}h2{font-size:20px;margin:0 0 16px}h3{font-size:16px;margin:0 0 10px}p{margin:8px 0}.eyebrow{font-size:12px;letter-spacing:2px;color:#b2c7df}.tabs{display:flex;gap:8px;margin:20px 0}.tabs button{background:transparent;color:var(--muted);border:1px solid var(--line)}.tabs [aria-selected=true]{background:var(--ink);color:#fff}.grid{display:grid;grid-template-columns:1fr 2fr;gap:20px}.card{background:white;border:1px solid var(--line);border-radius:16px;padding:24px;margin-bottom:20px}.balance{background:#19324e;color:white}.balance .small{color:#bdcde0}.big{font-size:clamp(25px,4vw,37px);font-weight:bold;color:#ffd271;overflow-wrap:anywhere}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.full{grid-column:1/-1}label{display:block;font-size:13px;font-weight:bold;margin-bottom:5px}input{font:inherit;border:1px solid #c5d2e2;border-radius:8px;width:100%;padding:10px;background:#fff;color:var(--ink)}input:focus,button:focus-visible,summary:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}button,.download{font:inherit;border:0;border-radius:8px;padding:10px 16px;background:var(--blue);color:white;cursor:pointer;text-decoration:none;display:inline-block}button:disabled{opacity:.5;cursor:wait}.secondary{background:#eaf0f7;color:#28415e}.danger{background:#fff1f2;color:#be123c}.small{font-size:12px;color:var(--muted)}.notice{border:1px solid #edce88;background:#fffbeb;color:#80541b;padding:14px 18px;border-radius:12px;margin-bottom:18px}.info{border-color:#bcd3f9;background:#eff6ff;color:#234b8b}.error{border-color:#fda4af;background:#fff1f2;color:#9f1239}.actions{display:flex;flex-wrap:wrap;gap:9px;align-items:center}table{border-collapse:collapse;width:100%;font-size:13px;white-space:nowrap}th,td{text-align:right;padding:12px 10px;border-bottom:1px solid var(--line)}th{background:#f1f5f9;font-size:12px;color:#536780}th:first-child,td:first-child{text-align:left}.scroll{overflow-x:auto}.green{color:#087f63}.red{color:#be123c}summary{cursor:pointer;color:#28568b;font-weight:bold}details p{font-size:13px}.stats{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}.stat{background:#eff6ff;border-radius:12px;padding:16px}.stat strong{display:block;font-size:25px;color:#2456a5}.stat span{font-size:12px;color:var(--muted)}[hidden]{display:none!important}footer{color:var(--muted);font-size:12px;text-align:center;margin-top:20px}.tag{font-size:11px;border-radius:5px;background:#eaf0f7;padding:3px 6px}.rowdelete{font-size:12px;padding:5px 8px}.chart{width:100%;height:auto;display:block}#message{position:sticky;top:8px;z-index:3}dialog{border:1px solid var(--line);border-radius:16px;padding:24px;width:min(94vw,620px);max-height:90vh;overflow:auto}dialog::backdrop{background:#12243b99}@media(max-width:760px){main{padding:16px 12px}.grid{grid-template-columns:1fr;gap:0}.card{padding:18px}header{padding:24px 20px}h1{font-size:23px}.tabs button{flex:1;padding:10px}.fields{grid-template-columns:1fr}.full{grid-column:auto}.big{font-size:34px}}@media print{body{background:white}button,.tabs,.no-print,dialog{display:none!important}.card{break-inside:avoid;box-shadow:none}main{max-width:none;padding:0}.grid{display:block}header{background:white;color:#172b45;border:1px solid #dce5ef}header h1,header p{color:#172b45}.balance{background:white;color:#172b45}.big{color:#172b45}}
+</style>
 </head>
-<body class="p-4 md:p-8 max-w-6xl mx-auto space-y-6">
-
-    <div class="text-center py-6 bg-slate-900 text-white rounded-2xl shadow-lg relative overflow-hidden">
-        <h1 class="text-3xl md:text-4xl font-bold mb-2 text-amber-400">NT Co-op Debt Tracker</h1>
-        <p class="text-slate-300">Sync Data to Google Sheets via Make.com</p>
-    </div>
-
-    <div class="flex justify-center border-b border-slate-200 mb-6">
-        <div id="tab-tracker" class="tab-btn tab-active" onclick="switchTab('tracker')">📝 บันทึกจ่ายจริง (My Tracker)</div>
-        <div id="tab-simulator" class="tab-btn tab-inactive" onclick="switchTab('simulator')">📊 จำลองแผน (Simulator)</div>
-    </div>
-
-    <!-- ==================== SECTION 1: PERSONAL TRACKER ==================== -->
-    <div id="section-tracker" class="space-y-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="card md:col-span-1 bg-gradient-to-br from-slate-800 to-slate-900 text-white border-0 shadow-lg">
-                <h2 class="text-lg font-bold text-slate-300 mb-1">ยอดหนี้คงเหลือปัจจุบัน</h2>
-                <p id="current-balance" class="text-4xl font-bold text-amber-400 my-2">0.00</p>
-                <p class="text-sm text-slate-400">จากยอดตั้งต้น: <span id="start-balance-display">377,878</span> บาท</p>
-                <div class="mt-6 pt-4 border-t border-slate-700 flex justify-between">
-                    <button onclick="openSettings()" class="text-sm text-slate-300 hover:text-white underline">⚙️ ตั้งค่าเริ่มต้น</button>
-                    <!-- Status Webhook -->
-                    <div class="flex gap-2 text-xs items-center bg-slate-700 px-2 py-1 rounded">
-                        <span id="webhook-status" class="w-2 h-2 rounded-full bg-emerald-400"></span> 
-                        <span>Cloud Sync Ready</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card md:col-span-2 border-t-4 border-emerald-500">
-                <h2 class="text-xl font-bold text-slate-800 mb-4">เพิ่มรายการจ่ายเงิน</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-600 mb-1">วันที่จ่าย</label>
-                        <input type="date" id="pay-date" class="input-field bg-slate-50">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-600 mb-1">จำนวนเงิน (บาท)</label>
-                        <input type="number" id="pay-amount" class="input-field border-emerald-400 font-bold text-emerald-700" placeholder="เช่น 14180">
-                    </div>
-                    <div class="flex items-end">
-                        <button onclick="addRecord()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-lg transition shadow-md">
-                            + บันทึก & ซิงค์ข้อมูล
-                        </button>
-                    </div>
-                </div>
-                <p class="text-xs text-emerald-600 mt-3 font-semibold">* เมื่อกดบันทึก ข้อมูลจะถูกยิงผ่าน Webhook ไปเก็บไว้ใน Google Sheets โดยอัตโนมัติ</p>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-slate-800">ประวัติการจ่ายเงิน (จากหน้าเว็บ)</h2>
-                <button onclick="clearHistory()" class="text-xs text-red-500 hover:text-red-700 underline">ล้างประวัติหน้าเว็บ (ไม่ลบใน Sheet)</button>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-sm text-left text-slate-600">
-                    <thead class="text-xs text-slate-700 uppercase bg-slate-100">
-                        <tr>
-                            <th class="px-4 py-3">วันที่</th>
-                            <th class="px-4 py-3 text-right">ยอดที่จ่าย (บาท)</th>
-                            <th class="px-4 py-3 text-right text-rose-500">หักดอกเบี้ย (บาท)</th>
-                            <th class="px-4 py-3 text-right text-emerald-600">ตัดเงินต้น (บาท)</th>
-                            <th class="px-4 py-3 text-right font-bold text-slate-800">หนี้คงเหลือ (บาท)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="history-body"></tbody>
-                </table>
-                <div id="empty-state" class="text-center py-8 text-slate-400 hidden">
-                    ยังไม่มีประวัติการจ่ายเงิน เริ่มบันทึกรายการแรกของคุณด้านบนได้เลย!
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ==================== SECTION 2: SIMULATOR ==================== -->
-    <div id="section-simulator" class="hidden space-y-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="card md:col-span-1 space-y-4 border-t-4 border-blue-500">
-                <h2 class="text-xl font-bold text-slate-800 border-b pb-2">ตั้งค่าแผนจำลอง</h2>
-                <div>
-                    <label class="block text-sm font-semibold text-slate-600 mb-1">ยอดหนี้เงินต้น (บาท)</label>
-                    <input type="number" id="sim-principal" class="input-field bg-slate-50" value="377878">
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-slate-600 mb-1">ดอกเบี้ยต่อปี (%)</label>
-                    <input type="number" id="sim-rate" class="input-field bg-slate-50" value="4.75" step="0.1">
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-blue-600 mb-1">ยอดส่งต่อเดือน (บาท)</label>
-                    <input type="number" id="sim-pmt" class="input-field border-blue-400 font-bold text-blue-700" value="14180">
-                </div>
-                <button onclick="calculateSimulation()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg mt-4">คำนวณแผน</button>
-            </div>
-            <div class="card md:col-span-2 space-y-4 border-t-4 border-slate-500">
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-blue-50 p-4 rounded-xl text-center border border-blue-100">
-                        <p class="text-sm font-bold text-blue-600">ใช้เวลาผ่อนหมด</p>
-                        <p id="sim-res-months" class="text-3xl font-bold text-blue-800 my-1">-</p>
-                    </div>
-                    <div class="bg-rose-50 p-4 rounded-xl text-center border border-rose-100">
-                        <p class="text-sm font-bold text-rose-600">ดอกเบี้ยจ่ายรวม</p>
-                        <p id="sim-res-interest" class="text-3xl font-bold text-rose-800 my-1">-</p>
-                    </div>
-                </div>
-                <div>
-                    <h3 class="text-lg font-bold text-slate-800 mb-2 mt-4">กราฟการลดลงของหนี้</h3>
-                    <div class="relative h-56 w-full"><canvas id="simChart"></canvas></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Settings Modal -->
-    <div id="settings-modal" class="fixed inset-0 bg-slate-900 bg-opacity-50 flex items-center justify-center hidden z-50">
-        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
-            <h2 class="text-xl font-bold text-slate-800 mb-4">ตั้งค่าข้อมูลหนี้เริ่มต้น</h2>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-semibold text-slate-600 mb-1">ยอดหนี้เริ่มต้น (บาท)</label>
-                    <input type="number" id="set-principal" class="input-field">
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-slate-600 mb-1">อัตราดอกเบี้ย (% ต่อปี)</label>
-                    <input type="number" id="set-rate" class="input-field" step="0.1">
-                </div>
-                <div class="flex justify-end gap-3 mt-6">
-                    <button onclick="closeSettings()" class="px-4 py-2 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg">ยกเลิก</button>
-                    <button onclick="saveSettings()" class="px-4 py-2 text-white bg-slate-800 hover:bg-slate-900 rounded-lg">บันทึกค่า</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        let simChartInstance = null;
-        const storageKey = 'myDebtTrackerData';
-        let trackerData = JSON.parse(localStorage.getItem(storageKey));
-
-        if (!trackerData) {
-            trackerData = { startPrincipal: 377878, annualRate: 4.75, records: [] };
-            saveData();
-        }
-
-        function formatMoney(num) {
-            return new Intl.NumberFormat('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
-        }
-        function saveData() {
-            localStorage.setItem(storageKey, JSON.stringify(trackerData));
-        }
-        
-        document.getElementById('pay-date').valueAsDate = new Date();
-
-        function switchTab(tab) {
-            document.getElementById('section-tracker').classList.add('hidden');
-            document.getElementById('section-simulator').classList.add('hidden');
-            document.getElementById('tab-tracker').className = 'tab-btn tab-active';
-            document.getElementById('tab-simulator').className = 'tab-btn tab-active';
-
-            if (tab === 'tracker') {
-                document.getElementById('section-tracker').classList.remove('hidden');
-                document.getElementById('tab-tracker').className = 'tab-btn tab-active';
-                updateTrackerUI();
-            } else {
-                document.getElementById('section-simulator').classList.remove('hidden');
-                document.getElementById('tab-simulator').className = 'tab-btn tab-active';
-                calculateSimulation();
-            }
-        }
-
-        // ==================== Logic: Add Record & Webhook ====================
-        function addRecord() {
-            let date = document.getElementById('pay-date').value;
-            let amount = parseFloat(document.getElementById('pay-amount').value);
-            
-            if (!date || isNaN(amount) || amount <= 0) {
-                alert("กรุณาใส่วันที่และจำนวนเงินให้ถูกต้องครับ");
-                return;
-            }
-
-            // 1. คำนวณหายอดคงเหลือ (Balance) ล่าสุด ณ ปัจจุบัน
-            let currentBalance = trackerData.startPrincipal;
-            let monthlyRate = (trackerData.annualRate / 100) / 12;
-            
-            trackerData.records.sort((a, b) => new Date(a.date) - new Date(b.date));
-            trackerData.records.forEach(record => {
-                let pastInterest = currentBalance * monthlyRate;
-                let pastPrincipalPaid = record.amount - pastInterest;
-                if (pastPrincipalPaid < 0) { pastPrincipalPaid = 0; }
-                currentBalance -= pastPrincipalPaid;
-                if (currentBalance < 0) currentBalance = 0;
-            });
-
-            // 2. คำนวณดอกเบี้ยและยอดตัดต้น สำหรับ "ยอดเงินก้อนใหม่" นี้
-            let interest = currentBalance * monthlyRate;
-            let principalPaid = amount - interest;
-            if (principalPaid < 0) {
-                interest = amount;
-                principalPaid = 0;
-            }
-            let newBalance = currentBalance - principalPaid;
-            if (newBalance < 0) newBalance = 0;
-
-            // 3. เตรียมข้อมูล (Payload) เพื่อยิงไปที่ Make.com
-            const webhookData = {
-                date: date,
-                amount: amount,
-                interest: Number(interest.toFixed(2)),
-                principal: Number(principalPaid.toFixed(2)),
-                balance: Number(newBalance.toFixed(2))
-            };
-
-            // อัปเดต URL ของ Webhook ที่ใหม่ล่าสุด
-            const WEBHOOK_URL = "https://hook.eu1.make.com/bowfbulff888832tt6ktk7efu32egppe";
-
-            // 4. สั่งยิง Webhook ด้วยคำสั่ง Fetch
-            document.getElementById("webhook-status").className = "w-2 h-2 rounded-full bg-yellow-400 animate-pulse";
-            
-            fetch(WEBHOOK_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(webhookData)
-            })
-            .then(response => {
-                document.getElementById("webhook-status").className = "w-2 h-2 rounded-full bg-emerald-400";
-                console.log("ส่งข้อมูลขึ้น Google Sheets ผ่าน Make.com สำเร็จ");
-            })
-            .catch(error => {
-                document.getElementById("webhook-status").className = "w-2 h-2 rounded-full bg-red-500";
-                console.error("Webhook Error:", error);
-                alert("ไม่สามารถซิงค์ข้อมูลกับระบบ Cloud ได้ แต่ข้อมูลถูกบันทึกลงหน้าเว็บแล้ว");
-            });
-
-            // 5. บันทึกข้อมูลลงหน้าเว็บปกติ
-            trackerData.records.push({ date: date, amount: amount });
-            saveData();
-            document.getElementById('pay-amount').value = '';
-            updateTrackerUI();
-        }
-
-        // ==================== Tracker UI Update ====================
-        function updateTrackerUI() {
-            document.getElementById('start-balance-display').innerText = formatMoney(trackerData.startPrincipal);
-            
-            let tbody = document.getElementById('history-body');
-            let emptyState = document.getElementById('empty-state');
-            tbody.innerHTML = '';
-            
-            let currentBalance = trackerData.startPrincipal;
-            let monthlyRate = (trackerData.annualRate / 100) / 12;
-
-            if (trackerData.records.length === 0) {
-                emptyState.classList.remove('hidden');
-                document.getElementById('current-balance').innerText = formatMoney(currentBalance);
-                return;
-            } else {
-                emptyState.classList.add('hidden');
-            }
-
-            trackerData.records.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-            trackerData.records.forEach((record, index) => {
-                let interest = currentBalance * monthlyRate;
-                let principalPaid = record.amount - interest;
-                
-                if (principalPaid < 0) {
-                    interest = record.amount;
-                    principalPaid = 0;
-                }
-
-                currentBalance -= principalPaid;
-                if (currentBalance < 0) currentBalance = 0;
-
-                let dateObj = new Date(record.date);
-                let formattedDate = dateObj.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
-
-                tbody.innerHTML += `
-                    <tr class="border-b hover:bg-slate-50">
-                        <td class="px-4 py-3">${formattedDate}</td>
-                        <td class="px-4 py-3 text-right font-bold text-slate-700">${formatMoney(record.amount)}</td>
-                        <td class="px-4 py-3 text-right text-rose-500">${formatMoney(interest)}</td>
-                        <td class="px-4 py-3 text-right text-emerald-600">${formatMoney(principalPaid)}</td>
-                        <td class="px-4 py-3 text-right font-bold text-slate-800">${formatMoney(currentBalance)}</td>
-                    </tr>
-                `;
-            });
-            document.getElementById('current-balance').innerText = formatMoney(currentBalance);
-        }
-
-        function clearHistory() {
-            if (confirm("ล้างประวัติการจ่ายเงินหน้าเว็บใช่หรือไม่? (ประวัติใน Google Sheets จะไม่หายไปไหน)")) {
-                trackerData.records = [];
-                saveData();
-                updateTrackerUI();
-            }
-        }
-
-        function openSettings() { document.getElementById('set-principal').value = trackerData.startPrincipal; document.getElementById('set-rate').value = trackerData.annualRate; document.getElementById('settings-modal').classList.remove('hidden'); }
-        function closeSettings() { document.getElementById('settings-modal').classList.add('hidden'); }
-        function saveSettings() {
-            let p = parseFloat(document.getElementById('set-principal').value);
-            let r = parseFloat(document.getElementById('set-rate').value);
-            if (!isNaN(p) && !isNaN(r)) { trackerData.startPrincipal = p; trackerData.annualRate = r; saveData(); updateTrackerUI(); closeSettings(); }
-        }
-
-        // ==================== Simulator Update ====================
-        function calculateSimulation() {
-            let principal = parseFloat(document.getElementById('sim-principal').value);
-            let rate = parseFloat(document.getElementById('sim-rate').value);
-            let pmt = parseFloat(document.getElementById('sim-pmt').value);
-            let monthlyRate = (rate / 100) / 12;
-            if (pmt <= principal * monthlyRate) { alert("ยอดส่งน้อยกว่าดอกเบี้ยรายเดือน"); return; }
-            let balance = principal, months = 0, totalInterest = 0, chartLabels = [0], chartData = [balance];
-            while (balance > 0 && months < 1200) {
-                months++;
-                let interest = balance * monthlyRate;
-                let principalPaid = pmt - interest;
-                if (balance < principalPaid) { principalPaid = balance; }
-                balance -= principalPaid;
-                totalInterest += interest;
-                if (months % 3 === 0 || balance <= 0) { chartLabels.push(months); chartData.push(balance); }
-            }
-            document.getElementById('sim-res-months').innerText = `${months} เดือน`;
-            document.getElementById('sim-res-interest').innerText = formatMoney(totalInterest) + ' ฿';
-            renderSimChart(chartLabels, chartData);
-        }
-
-        function renderSimChart(labels, data) {
-            const ctx = document.getElementById('simChart').getContext('2d');
-            if (simChartInstance) simChartInstance.destroy();
-            simChartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels.map(l => l > 0 ? 'ด.'+l : 'เริ่ม'),
-                    datasets: [{ label: 'ยอดหนี้คงเหลือ', data: data, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', borderWidth: 2, fill: true, tension: 0.3, pointRadius: 0 }]
-                },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
-        }
-        updateTrackerUI();
-    </script>
-</body>
-</html>
+<body><main>
+<header><div class="eyebrow">PERSONAL FINANCE / DAILY INTEREST</div><h1>NT Co-op Debt Tracker</h1><p>บันทึกจ่ายจริง • จำลองปลดหนี้ • คิดดอกเบี้ยตามจำนวนวัน</p></header>
+<div id="message" class="notice" role="status" aria-live="polite" hidden></div>
+<div id="storage-warning" class="notice error" hidden>เบราว์เซอร์ไม่อนุญาตให้เก็บข้อมูล หรือข้อมูลที่เก็บไว้ไม่ถูกต้อง การเปลี่ยนแปลงอาจอยู่เฉพาะหน้านี้ กรุณาส่งออกข้อมูลก่อนปิด และเปิดไฟล์ในเบราว์เซอร์ปกติ</div>
+<div id="legacy-warning" class="notice" hidden><strong>พบข้อมูลจากสูตรเวอร์ชันเดิม</strong><p>ยังไม่ได้นำรายการเดิมมาหักจากยอดตั้งต้นใหม่ เพื่อป้องกันการตัดหนี้ซ้ำ ข้อมูลเดิมยังอยู่ในเบราว์เซอร์ กรุณาดาวน์โหลดสำรองก่อน เริ่มเวอร์ชันนี้ด้วยยอดหลังชำระ 25 ก.ย. 2569 จำนวน 377,878 บาท แล้วเพิ่มเฉพาะรายการหลังจุดตั้งต้นนี้</p><div class="actions"><button id="legacy-export" class="secondary">ดาวน์โหลดข้อมูลเดิม</button><button id="legacy-start">ยืนยันเริ่มจากยอดหลังงวด ก.ย.</button></div></div>
+<div class="tabs" role="tablist" aria-label="ส่วนการทำงาน"><button id="tab-tracker" role="tab" aria-controls="section-tracker" aria-selected="true">📝 บันทึกจ่ายจริง</button><button id="tab-simulator" role="tab" aria-controls="section-simulator" aria-selected="false" tabindex="-1">📊 จำลองแผน</button></div>
+<section id="section-tracker" role="tabpanel" aria-labelledby="tab-tracker">
+<div class="grid"><div class="card balance"><h2>ยอดหนี้คงเหลือ</h2><div id="current-balance" class="big">377,878.00</div><p>บาท</p><p id="base-description" class="small"></p><p id="asof-description" class="small"></p><button id="settings-open" class="secondary">⚙ ตั้งค่าจุดเริ่มต้น</button><p class="small">ยอดนี้คือเงินต้นหลังรายการล่าสุด ไม่รวมดอกเบี้ยที่เกิดหลังวันนั้น</p></div>
+<div class="card"><h2>เพิ่มรายการชำระ / โปะเพิ่ม</h2><form id="payment-form"><div class="fields"><div><label for="pay-date">วันที่สหกรณ์บันทึกรับชำระ</label><input type="date" id="pay-date" required></div><div><label for="pay-amount">ยอดชำระเงินกู้ (บาท)</label><input type="number" id="pay-amount" min="0.01" step="0.01" placeholder="เช่น 7580" required></div><div><label for="pay-interest">ดอกเบี้ยตามใบเสร็จ (ถ้ามี)</label><input type="number" id="pay-interest" min="0" step="0.01" placeholder="เว้นว่าง = คำนวณรายวัน"></div><div><label for="pay-note">หมายเหตุ (ไม่บังคับ)</label><input id="pay-note" maxlength="200" placeholder="งวดปกติ / โปะเพิ่ม"></div><div class="full"><label style="font-weight:normal"><input type="checkbox" id="pay-principal-only" style="width:auto"> โปะเงินต้นล้วน — ยังไม่ชำระดอกเบี้ยที่สะสมระหว่างวัน</label></div><div class="full"><button type="submit" id="save-payment">+ บันทึกรายการ</button></div></div></form><p class="small">กรอกเฉพาะยอดชำระเงินกู้ ไม่รวมค่าหุ้นและประกัน • ถ้าโปะตัดเงินต้นล้วนและยังไม่ชำระดอกเบี้ย ให้เลือกช่อง “โปะเงินต้นล้วน” เพื่อเก็บดอกเบี้ยสะสมไปรอบถัดไป</p><p id="payment-preview" class="small" aria-live="polite"></p></div></div>
+<div class="card"><div class="actions" style="justify-content:space-between;margin-bottom:14px"><h2 style="margin:0">ประวัติจากจุดเริ่มต้น</h2><div class="actions"><button id="export-data" class="secondary">สำรอง JSON</button><button id="import-data" class="secondary">นำเข้า JSON</button><input id="import-file" type="file" accept=".json,application/json" hidden></div></div><div class="scroll"><table><thead><tr><th>วันที่ / หมายเหตุ</th><th>วัน</th><th>ยอดชำระ</th><th>ดอกเบี้ย</th><th>ตัดเงินต้น</th><th>หนี้คงเหลือ</th><th>ยอดเกิน*</th><th>Cloud</th><th></th></tr></thead><tbody id="history-body"></tbody></table></div><p id="empty-state" class="small">ยังไม่มีรายการหลังจุดเริ่มต้น — งวด ก.ย. 2569 รวมอยู่ในยอดตั้งต้นแล้ว</p><p class="small">* ยอดเกิน = ส่วนของเงินชำระที่เกินเงินต้นและดอกเบี้ย ไม่ถูกนำไปตัดหนี้ติดลบ โปรดตรวจสอบกับสหกรณ์</p></div>
+<div class="card"><details><summary>สูตรคำนวณและข้อจำกัด</summary><p>ดอกเบี้ยประมาณการ = เงินต้นคงเหลือ × อัตราต่อปี ÷ 100 × จำนวนวันจริง ÷ 365 ค่าเริ่มต้นปัดดอกเบี้ยเป็นบาทเต็มตามข้อมูล 4 งวด มิ.ย.–ก.ย. 2569 ที่ตรวจสอบ สามารถเลือกปัดสองตำแหน่งได้ในตั้งค่า</p><p>ใช้วันที่รับชำระเป็นจุดเริ่มช่วงคำนวณถัดไป กรณีเลือก “โปะเงินต้นล้วน” ดอกเบี้ยช่วงก่อนโปะจะถูกสะสมแบบไม่ปัดเศษไปคิดในงวดปกติถัดไป โดยไม่ทบเป็นเงินต้น รายการวันเดียวกันมีช่วงวันเป็น 0 โดยเรียงตามลำดับบันทึก หากกรอกดอกเบี้ยตามใบเสร็จ จะใช้ยอดนั้นแทนสูตร ไม่รองรับการชำระต่ำกว่าดอกเบี้ยที่คำนวณ/ระบุ และยังไม่จำลองการพักชำระ ดอกเบี้ยค้าง หรือการเปลี่ยนอัตราระหว่างงวด</p><p>การโปะอาจมีวิธีจัดสรรดอกเบี้ยต่างจากงวดปกติ ควรใช้ใบเสร็จจริงเป็นหลัก ฐาน 365 วันรวมถึงกติกาปีอธิกสุรทินและการปัดเศษยังควรยืนยันกับสหกรณ์ ตัวเลขจำลองไม่ใช่ยอดปิดบัญชีอย่างเป็นทางการ</p><p>ข้อมูลหน้าเว็บเก็บเฉพาะเบราว์เซอร์/เว็บไซต์นี้ ไม่ได้ดึงจาก Google Sheets อัตโนมัติ ควรสำรอง JSON เป็นประจำ โดยเฉพาะก่อนเปลี่ยนเครื่องหรือล้างข้อมูลเว็บไซต์</p></details></div>
+<div class="card no-print"><details><summary>ตั้งค่า Cloud / Make.com (ไม่บังคับ)</summary><p class="red">Webhook เดิมเคยปรากฏใน Repository สาธารณะ ควรเพิกถอน/เปลี่ยน URL ที่ Make.com ก่อนใช้อีกครั้ง ไฟล์นี้ไม่ฝัง URL เดิมและปิด Cloud เป็นค่าเริ่มต้น</p><label for="webhook-url">Webhook ใหม่ (เก็บเฉพาะเบราว์เซอร์นี้ ไม่รวมในไฟล์สำรอง)</label><input type="url" id="webhook-url" placeholder="https://hook.eu1.make.com/…" autocomplete="off"><div class="actions" style="margin-top:12px"><button id="save-webhook">บันทึก URL</button><button id="disable-webhook" class="secondary">ปิด Cloud</button></div><p id="cloud-description" class="small"></p><p class="small">การบันทึก URL ยังไม่ส่งข้อมูล แต่รายการชำระใหม่จะส่งวันที่ ยอดชำระ ดอกเบี้ย เงินต้น ยอดคงเหลือ หมายเหตุ และ ID ไปยัง Make.com ที่ระบุ “รับคำขอแล้ว” หมายถึง HTTP สำเร็จ ไม่ได้ยืนยันว่าเขียนลง Sheet แล้ว ไม่มีการลองส่งซ้ำอัตโนมัติ</p><p class="small">เพิ่มย้อนหลัง ลบรายการ เปลี่ยนจุดตั้งต้น หรือนำเข้าข้อมูล: จะไม่เขียนทับ Sheet อัตโนมัติ ต้องตรวจปรับข้อมูลใน Sheet ให้ตรงกัน แนะนำให้ workflow ใช้ record_id ป้องกันรายการซ้ำ</p></details></div>
+</section>
+<section id="section-simulator" role="tabpanel" aria-labelledby="tab-simulator" hidden><div class="notice info">จำลองโดยใช้วันชำระจริงในแต่ละเดือน ฐาน 365 วัน สมมติอัตราคงที่และไม่มีรายการอื่นระหว่างงวด</div><div class="grid"><div class="card"><h2>ตั้งค่าแผนจำลอง</h2><form id="sim-form"><div class="fields"><div class="full"><label for="sim-principal">เงินต้นตั้งต้น (บาท)</label><input type="number" id="sim-principal" min="0" step="0.01" required></div><div class="full"><label for="sim-accrued">ดอกเบี้ยสะสมที่ยังไม่ชำระ (บาท)</label><input type="number" id="sim-accrued" min="0" step="any" value="0" required></div><div class="full"><label for="sim-rate">ดอกเบี้ยต่อปี (%)</label><input type="number" id="sim-rate" min="0" step="0.001" required></div><div class="full"><label for="sim-base">วันที่ของยอดตั้งต้น (หลังชำระ)</label><input type="date" id="sim-base" required></div><div class="full"><label for="sim-first">วันชำระครั้งแรกในแผน</label><input type="date" id="sim-first" required></div><div class="full"><label for="sim-pmt">ยอดส่งต่อเดือน (บาท)</label><input type="number" id="sim-pmt" value="14180" min="0.01" step="0.01" required></div><div class="full"><button type="submit">คำนวณแผน</button> <button id="sim-current" type="button" class="secondary" style="margin-top:8px">ใช้ยอดล่าสุด</button></div></div></form><p class="small">เดือนต่อไปชำระวันที่เดียวกับครั้งแรก หากไม่มีวันนั้น ใช้วันสุดท้ายของเดือน โดยไม่เลื่อนตามวันหยุด</p></div><div class="card"><h2>ผลจำลอง</h2><div id="sim-error" class="notice error" hidden></div><div id="sim-results"><div class="stats"><div class="stat"><span>จำนวนงวดจนหมด</span><strong id="sim-res-months">—</strong></div><div class="stat"><span>ดอกเบี้ยรวม (บาท)</span><strong id="sim-res-interest">—</strong></div></div><p id="sim-summary" class="small"></p><div id="sim-chart"></div><details><summary>ตารางผ่อนชำระ</summary><div class="scroll"><table><thead><tr><th>วันที่</th><th>วัน</th><th>ยอดชำระ</th><th>ดอกเบี้ย</th><th>คงเหลือ</th></tr></thead><tbody id="sim-body"></tbody></table></div></details></div></div></div></section>
+<footer>Daily-interest edition • บันทึกในเครื่องก่อนส่ง Cloud • ไม่มีไลบรารีกราฟหรือสไตล์จากภายนอก</footer>
+</main>
+<dialog id="settings-modal"><h2>ตั้งค่าจุดเริ่มต้น</h2><p class="small">ยอดเงินต้นหลังชำระในวันที่ระบุ ไม่ใช่ยอดก่อนจ่าย การเปลี่ยนค่าจะคำนวณรายการหลังจุดตั้งต้นใหม่ แต่ไม่แก้ข้อมูลบน Sheet</p><form id="settings-form"><div class="fields"><div><label for="set-principal">เงินต้นคงเหลือ (บาท)</label><input id="set-principal" type="number" min="0" step="0.01" required></div><div><label for="set-rate">อัตราดอกเบี้ยต่อปี (%)</label><input id="set-rate" type="number" min="0" step="0.001" required></div><div><label for="set-date">วันที่หลังชำระ</label><input id="set-date" type="date" required></div><div><label for="set-rounding">การปัดดอกเบี้ย</label><select id="set-rounding" style="width:100%;padding:12px;border:1px solid #c5d2e2;border-radius:8px;font:inherit"><option value="baht">บาทเต็ม (ตามตัวอย่าง)</option><option value="satang">สองตำแหน่ง (สตางค์)</option></select></div></div><div class="actions" style="margin-top:20px"><button type="submit">บันทึกค่า</button><button id="settings-close" type="button" class="secondary">ยกเลิก</button></div></form></dialog>
+<script>
+'use strict';
+// Pure calculation functions. Date-only arithmetic uses UTC to avoid DST/timezone shifts.
+const DAY_MS = 86400000;
+function dateNumber(value) {
+    if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) throw new Error('วันที่ไม่ถูกต้อง');
+    const t = Date.parse(value + 'T00:00:00Z');
+    if (!Number.isFinite(t) || new Date(t).toISOString().slice(0,10) !== value) throw new Error('วันที่ไม่ถูกต้อง');
+    return t;
+}
+function dayDiff(a,b) { return (dateNumber(b)-dateNumber(a))/DAY_MS; }
+function validNumber(n, name, min=0) { if (typeof n !== 'number' || !Number.isFinite(n) || n < min || n > 1e12) throw new Error(name+'ไม่ถูกต้อง'); return n; }
+function cents(n) { return Math.round((n+Number.EPSILON)*100)/100; }
+function interestFor(balance, rate, days, rounding='baht') {
+    validNumber(balance,'ยอดเงินต้น'); validNumber(rate,'อัตราดอกเบี้ย'); validNumber(days,'จำนวนวัน');
+    if (!['baht','satang'].includes(rounding)) throw new Error('วิธีปัดเศษไม่ถูกต้อง');
+    const raw = balance*rate/100*days/365;
+    return rounding === 'baht' ? Math.round(raw) : cents(raw);
+}
+function computeLedger(config, records) {
+    validNumber(config.startPrincipal,'ยอดเงินต้น'); validNumber(config.annualRate,'อัตราดอกเบี้ย'); dateNumber(config.baseDate);
+    if (!['baht','satang'].includes(config.rounding)) throw new Error('วิธีปัดเศษไม่ถูกต้อง');
+    if (!Array.isArray(records)) throw new Error('รายการข้อมูลไม่ถูกต้อง');
+    const ordered = records.map((r,index)=>({...r,index})).sort((a,b)=>dateNumber(a.date)-dateNumber(b.date)||a.index-b.index);
+    let balance=cents(config.startPrincipal), previous=config.baseDate;
+    let accruedInterest=validNumber(config.initialAccruedInterest??0,'ดอกเบี้ยสะสม');
+    const rows=ordered.map(r=>{
+        const days=dayDiff(previous,r.date);
+        if(days<0) throw new Error('รายการต้องไม่อยู่ก่อนวันที่ตั้งต้น');
+        validNumber(r.amount,'ยอดชำระ',0.01);
+        const accruedRaw=accruedInterest+balance*config.annualRate/100*days/365;
+        const estimated=config.rounding==='baht'?Math.round(accruedRaw):cents(accruedRaw);
+        const manual=r.interestOverride !== null && r.interestOverride !== undefined;
+        if(r.principalOnly && manual && r.interestOverride!==0)throw new Error('รายการโปะเงินต้นล้วนต้องไม่ระบุดอกเบี้ยที่ชำระ');
+        const interest=r.principalOnly?0:(manual ? cents(validNumber(r.interestOverride,'ดอกเบี้ยตามใบเสร็จ')) : estimated);
+        if(balance<=0 && accruedRaw<=0) throw new Error('หนี้หมดแล้ว ไม่สามารถเพิ่มรายการชำระได้');
+        if(balance<=0 && r.principalOnly)throw new Error('ไม่มีเงินต้นให้โปะ กรุณาชำระดอกเบี้ยสะสมเป็นรายการปกติ');
+        if(cents(r.amount)<interest) throw new Error('ยอดชำระวันที่ '+r.date+' ต่ำกว่าดอกเบี้ย ระบบนี้ยังไม่รองรับดอกเบี้ยค้าง');
+        const principal=cents(Math.min(balance,cents(r.amount-interest)));
+        const excess=cents(Math.max(0,r.amount-interest-principal));
+        balance=cents(balance-principal); previous=r.date;
+        accruedInterest=r.principalOnly?accruedRaw:0;
+        return {...r,days,interest,estimated,manual,principal,balance,excess,accruedInterest};
+    });
+    return {rows,balance,lastDate:previous,accruedInterest};
+}
+function addMonths(anchor,offset) {
+    dateNumber(anchor);
+    const [year,month,day]=anchor.split('-').map(Number);
+    const first=new Date(Date.UTC(year,month-1+offset,1));
+    const last=new Date(Date.UTC(first.getUTCFullYear(),first.getUTCMonth()+1,0)).getUTCDate();
+    return new Date(Date.UTC(first.getUTCFullYear(),first.getUTCMonth(),Math.min(day,last))).toISOString().slice(0,10);
+}
+function simulate(config,firstDate,payment,maxMonths=1200) {
+    validNumber(payment,'ยอดส่งต่อเดือน',0.01);
+    let {balance,accruedInterest}=computeLedger(config,[]),previous=config.baseDate,totalInterest=0;
+    if(dayDiff(previous,firstDate)<=0) throw new Error('วันชำระครั้งแรกต้องหลังวันตั้งต้น');
+    const rows=[];
+    for(let i=0;(balance>0 || accruedInterest>0) && i<maxMonths;i++) {
+        const date=addMonths(firstDate,i),days=dayDiff(previous,date);
+        const raw=accruedInterest+balance*config.annualRate/100*days/365;
+        const interest=config.rounding==='baht'?Math.round(raw):cents(raw);
+        if(payment<interest || (balance>0 && payment===interest)) throw new Error('ยอดส่งไม่พอตัดเงินต้นในงวด '+date+' กรุณาเพิ่มยอดส่ง');
+        const amount=cents(Math.min(payment,balance+interest));
+        const principal=cents(amount-interest);
+        balance=cents(balance-principal);accruedInterest=0;totalInterest=cents(totalInterest+interest);previous=date;
+        rows.push({date,days,interest,principal,amount,balance});
+    }
+    if(balance>0 || accruedInterest>0) throw new Error('ยังไม่หมดภายใน '+maxMonths+' งวด กรุณาปรับแผน');
+    return {rows,totalInterest,balance};
+}
+// APP_START: everything below this marker is browser UI / persistence / optional sync.
+const $=id=>document.getElementById(id);
+const STORAGE_KEY='myDebtTrackerData_v2';
+const LEGACY_KEY='myDebtTrackerData';
+const WEBHOOK_KEY='myDebtTrackerWebhook_v2';
+const money=n=>new Intl.NumberFormat('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n);
+const thaiDate=d=>new Date(dateNumber(d)).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'});
+const escapeHTML=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const defaultState=()=>({version:2,startPrincipal:377878,annualRate:4.75,baseDate:'2026-09-25',rounding:'baht',records:[]});
+function readStorage(key){try{return localStorage.getItem(key);}catch(e){$('storage-warning').hidden=false;return null;}}
+function writeStorage(key,value){try{localStorage.setItem(key,value);return true;}catch(e){$('storage-warning').hidden=false;return false;}}
+function validateState(s) {
+    if(!s || s.version!==2 || !Array.isArray(s.records) || s.records.length>20000) throw new Error('รองรับเฉพาะไฟล์สำรองเวอร์ชัน 2');
+    const ids=new Set();
+    s.records.forEach(r=>{if(typeof r.id!=='string'||ids.has(r.id)||r.id.length>200) throw new Error('ID รายการไม่ถูกต้องหรือซ้ำ');ids.add(r.id);if(r.note!=null && (typeof r.note!=='string'||r.note.length>200))throw new Error('หมายเหตุไม่ถูกต้อง');});
+    computeLedger(s,s.records);return s;
+}
+let state=defaultState();
+const stored=readStorage(STORAGE_KEY);
+let corrupt=false;
+if(stored){try{state=validateState(JSON.parse(stored));}catch(e){corrupt=true;$('storage-warning').hidden=false;}}
+const legacy=readStorage(LEGACY_KEY);
+let legacyPending=Boolean(legacy&&!stored);
+$('legacy-warning').hidden=!legacyPending;
+let webhook=readStorage(WEBHOOK_KEY)||'';
+let pendingRequests=0;
+function showMessage(text,error=false){$('message').textContent=text;$('message').className='notice'+(error?' error':' info');$('message').hidden=false;}
+function saveState(){if(corrupt)throw new Error('ข้อมูลเวอร์ชัน 2 เดิมอ่านไม่ได้ โปรดสำรองข้อมูลเดิมก่อนเขียนทับ');return writeStorage(STORAGE_KEY,JSON.stringify(state));}
+function markCloudReview(records){records.forEach(r=>{if(r.syncStatus && r.syncStatus!=='local')r.syncStatus='review';});}
+function uid(){return globalThis.crypto?.randomUUID?.() || Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);}
+function todayLocal(){const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');}
+function download(name,text,type='application/json'){const url=URL.createObjectURL(new Blob([text],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+function guard(){if(pendingRequests)throw new Error('กำลังส่ง Cloud กรุณารอให้เสร็จก่อน');if(corrupt)throw new Error('ข้อมูลเดิมอ่านไม่ได้ กรุณาสำรอง/นำเข้าข้อมูลที่ถูกต้องก่อน');if(legacyPending)throw new Error('กรุณาสำรองข้อมูลเดิมและยืนยันจุดเริ่มต้นก่อน');}
+function renderTracker(){
+    const result=computeLedger(state,state.records);
+    $('current-balance').textContent=money(result.balance);
+    $('base-description').textContent='ตั้งต้น '+money(state.startPrincipal)+' บาท หลังชำระ '+thaiDate(state.baseDate)+' • '+state.annualRate+'% ต่อปี';
+    $('asof-description').textContent='ยอดหลังรายการล่าสุด: '+thaiDate(result.lastDate)+(result.accruedInterest>0?' • มีดอกเบี้ยสะสมประมาณ '+money(result.accruedInterest)+' บาท (ยังไม่ได้ชำระ/ยังไม่รวมในเงินต้น)':'');
+    $('pay-date').min=state.baseDate;
+    $('empty-state').hidden=result.rows.length>0;
+    const statuses={local:'เฉพาะเครื่อง',pending:'กำลังส่ง',accepted:'รับคำขอแล้ว',failed:'ไม่ยืนยันผล',review:'ตรวจ Sheet'};
+    $('history-body').innerHTML=result.rows.map(r=>`<tr><td>${escapeHTML(thaiDate(r.date))}<br><span class="small">${escapeHTML(r.note)}</span></td><td>${r.days}</td><td>${money(r.amount)}</td><td class="red">${money(r.interest)}<br><span class="small">${r.principalOnly?'โปะต้นล้วน':r.manual?'ใบเสร็จ':'ประมาณการ'}</span></td><td class="green">${money(r.principal)}</td><td><strong>${money(r.balance)}</strong></td><td>${money(r.excess)}</td><td><span class="tag">${escapeHTML(statuses[r.syncStatus]||'เฉพาะเครื่อง')}</span></td><td><button class="danger rowdelete" data-delete="${escapeHTML(r.id)}" aria-label="ลบรายการ ${escapeHTML(thaiDate(r.date))}">ลบ</button></td></tr>`).join('');
+    return result;
+}
+function renderCloud(){ $('webhook-url').value=webhook;$('cloud-description').textContent=webhook?'เปิดส่งรายการใหม่ไป Make.com เมื่อกดบันทึก (ยังไม่ตรวจสอบปลายทาง)':'ปิด Cloud — บันทึกเฉพาะเบราว์เซอร์นี้'; }
+async function sendWebhook(record,row){
+    pendingRequests++;record.syncStatus='pending';saveState();renderTracker();
+    const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),15000);
+    try{
+        const response=await fetch(webhook,{method:'POST',headers:{'Content-Type':'application/json'},signal:controller.signal,body:JSON.stringify({date:row.date,amount:row.amount,interest:row.interest,principal:row.principal,balance:row.balance,record_id:row.id,days:row.days,excess:row.excess,note:row.note,interest_source:row.principalOnly?'principal_only':row.manual?'receipt':'daily_estimate',accrued_interest:row.accruedInterest,base_date:state.baseDate,annual_rate:state.annualRate,day_basis:365,rounding:state.rounding})});
+        if(!response.ok)throw new Error('HTTP '+response.status);
+        record.syncStatus='accepted';showMessage('บันทึกในเครื่องแล้ว • Make.com รับคำขอแล้ว โปรดตรวจว่า Sheet บันทึกสำเร็จ');
+    }catch(e){record.syncStatus='failed';showMessage('บันทึกในเครื่องแล้ว แต่ยืนยัน Cloud ไม่ได้ ('+e.message+') โปรดตรวจ Sheet ก่อนส่งซ้ำเพื่อป้องกันรายการซ้ำ',true);}
+    finally{clearTimeout(timeout);pendingRequests--;saveState();renderTracker();}
+}
+$('payment-form').addEventListener('submit',async event=>{
+    event.preventDefault();
+    try{
+        guard();const override=$('pay-interest').value;
+        const r={id:uid(),date:$('pay-date').value,amount:cents(Number($('pay-amount').value)),interestOverride:override===''?null:Number(override),note:$('pay-note').value.trim(),principalOnly:$('pay-principal-only').checked,syncStatus:'local'};
+        const latest=computeLedger(state,state.records).lastDate;
+        const backdated=r.date<latest;
+        const next=computeLedger(state,[...state.records,r]);
+        if(backdated && !confirm('เป็นรายการย้อนหลัง จะคำนวณรายการถัดไปใหม่ แต่ไม่แก้หรือส่งข้อมูลไป Sheet อัตโนมัติ ดอกเบี้ยที่ระบุตามใบเสร็จจะคงเดิม ต้องการบันทึกหรือไม่?'))return;
+        state.records.push(r);if(backdated)markCloudReview(state.records);
+        const persisted=saveState();renderTracker();$('pay-amount').value='';$('pay-interest').value='';$('pay-note').value='';$('pay-principal-only').checked=false;$('payment-preview').textContent='';
+        showMessage((persisted?'บันทึกในเครื่องแล้ว':'บันทึกเฉพาะหน้านี้ กรุณาส่งออก JSON ก่อนปิด')+(backdated?' • เพิ่มย้อนหลังแล้ว กรุณาตรวจดอกเบี้ยตามใบเสร็จและปรับ Sheet ให้ตรงกัน':''),!persisted);
+        if(webhook && !backdated && persisted)await sendWebhook(r,next.rows.find(row=>row.id===r.id));
+    }catch(e){showMessage(e.message,true);}
+});
+['pay-date','pay-amount','pay-interest','pay-principal-only'].forEach(id=>$(id).addEventListener('input',()=>{
+    try{if(!$('pay-amount').value){$('payment-preview').textContent='';return;}const r={id:'preview',date:$('pay-date').value,amount:Number($('pay-amount').value),interestOverride:$('pay-interest').value===''?null:Number($('pay-interest').value),principalOnly:$('pay-principal-only').checked};const row=computeLedger(state,[...state.records,r]).rows.find(x=>x.id==='preview');$('payment-preview').textContent=`ช่วง ${row.days} วัน • ดอกเบี้ย ${money(row.interest)} • ตัดต้น ${money(row.principal)} • คงเหลือหลังรายการนี้ ${money(row.balance)} บาท`;}catch(e){$('payment-preview').textContent=e.message;}
+}));
+$('history-body').addEventListener('click',event=>{
+    const button=event.target.closest('[data-delete]');if(!button)return;
+    try{guard();if(!confirm('ลบรายการนี้จากเว็บและคำนวณรายการถัดไปใหม่? ไม่ลบใน Sheet โปรดสำรองก่อนหากต้องการเก็บประวัติ'))return;const records=state.records.filter(r=>r.id!==button.dataset.delete);computeLedger(state,records);markCloudReview(records);state.records=records;const ok=saveState();renderTracker();showMessage(ok?'ลบจากเว็บแล้ว กรุณาตรวจดอกเบี้ยตามใบเสร็จและปรับ Sheet ให้ตรงกัน':'เปลี่ยนแปลงเฉพาะหน้านี้ กรุณาส่งออก JSON',!ok);}catch(e){showMessage(e.message,true);}
+});
+$('settings-open').onclick=()=>{ $('set-principal').value=state.startPrincipal;$('set-rate').value=state.annualRate;$('set-date').value=state.baseDate;$('set-rounding').value=state.rounding;$('settings-modal').showModal(); };
+$('settings-close').onclick=()=>$('settings-modal').close();
+$('settings-form').onsubmit=event=>{
+    event.preventDefault();try{guard();const candidate={...state,startPrincipal:Number($('set-principal').value),annualRate:Number($('set-rate').value),baseDate:$('set-date').value,rounding:$('set-rounding').value};computeLedger(candidate,candidate.records);if(state.records.length&&!confirm('คำนวณรายการเดิมใหม่จากจุดตั้งต้นนี้? ต้องตรวจยอดดอกเบี้ยตามใบเสร็จและปรับข้อมูลใน Sheet เอง'))return;state=candidate;markCloudReview(state.records);const ok=saveState();renderTracker();loadSimCurrent();$('settings-modal').close();showMessage(ok?'บันทึกจุดตั้งต้นแล้ว (ไม่ได้แก้ข้อมูลใน Sheet)':'เปลี่ยนแปลงเฉพาะหน้านี้ กรุณาส่งออก JSON',!ok);}catch(e){alert(e.message);}
+};
+$('export-data').onclick=()=>{if(corrupt && stored){download('debt-tracker-original-unreadable.json',stored);return;}download('debt-tracker-'+todayLocal()+'.json',JSON.stringify(state,null,2));};
+$('import-data').onclick=()=>$('import-file').click();
+$('import-file').onchange=async event=>{
+    const file=event.target.files[0];if(!file)return;
+    try{if(pendingRequests)throw new Error('กรุณารอให้ส่ง Cloud เสร็จก่อน');if(file.size>10*1024*1024)throw new Error('ไฟล์ใหญ่เกิน 10 MB');const data=validateState(JSON.parse(await file.text()));if(!confirm('แทนที่ข้อมูลเวอร์ชัน 2 ในเว็บด้วยไฟล์นี้? ควรส่งออกข้อมูลเดิมก่อน ไม่มีการส่ง/แก้ข้อมูลใน Sheet'))return;markCloudReview(data.records);state=data;corrupt=false;legacyPending=false;$('legacy-warning').hidden=true;const ok=saveState();renderTracker();loadSimCurrent();showMessage(ok?'นำเข้าแล้ว กรุณาตรวจให้ตรงกับ Sheet':'นำเข้าเฉพาะหน้านี้ กรุณาส่งออกก่อนปิด',!ok);}catch(e){showMessage(e.message,true);}finally{event.target.value='';}
+};
+$('legacy-export').onclick=()=>download('debt-tracker-legacy-backup.json',legacy||'{}');
+$('legacy-start').onclick=()=>{if(!confirm('เริ่มยอด 377,878 บาทหลังงวด 25 ก.ย. 2569 โดยไม่ย้ายรายการเก่ามาตัดหนี้ซ้ำ? ข้อมูลเวอร์ชันเก่าจะไม่ถูกลบ'))return;legacyPending=false;$('legacy-warning').hidden=true;saveState();showMessage('เริ่มจากยอดหลังงวด ก.ย. แล้ว ข้อมูลเวอร์ชันเดิมยังอยู่ในเบราว์เซอร์');};
+$('save-webhook').onclick=()=>{
+    try{if(pendingRequests)throw new Error('กรุณารอให้ส่ง Cloud เสร็จก่อน');const value=$('webhook-url').value.trim();const url=new URL(value);if(url.protocol!=='https:'||!/^hook\.[a-z0-9-]+\.make\.com$/.test(url.hostname)||url.username||url.password||url.port)throw new Error('กรุณาใช้ HTTPS Webhook ของ Make.com โดยตรง');webhook=value;const ok=writeStorage(WEBHOOK_KEY,webhook);renderCloud();showMessage(ok?'เปิด Cloud สำหรับรายการใหม่แล้ว ยังไม่ได้ส่งข้อมูล':'เปิด Cloud เฉพาะหน้านี้ ไม่สามารถจำ URL ได้',!ok);}catch(e){showMessage(e.message,true);}
+};
+$('disable-webhook').onclick=()=>{if(pendingRequests){showMessage('กรุณารอให้ส่ง Cloud เสร็จก่อน',true);return;}webhook='';writeStorage(WEBHOOK_KEY,'');renderCloud();showMessage('ปิด Cloud แล้ว');};
+function switchTab(tab){for(const name of ['tracker','simulator']){const active=name===tab;$('section-'+name).hidden=!active;$('tab-'+name).setAttribute('aria-selected',String(active));$('tab-'+name).tabIndex=active?0:-1;}if(tab==='simulator')runSimulation();}
+for(const name of ['tracker','simulator']){$('tab-'+name).onclick=()=>switchTab(name);$('tab-'+name).onkeydown=e=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){e.preventDefault();const next=e.key==='Home'?'tracker':e.key==='End'?'simulator':name==='tracker'?'simulator':'tracker';switchTab(next);$('tab-'+next).focus();}};}
+function loadSimCurrent(){const result=computeLedger(state,state.records);$('sim-principal').value=result.balance;$('sim-accrued').value=result.accruedInterest;$('sim-rate').value=state.annualRate;$('sim-base').value=result.lastDate;$('sim-first').value=addMonths(result.lastDate,1);}
+function chartSVG(principal,rows){
+    const data=[{balance:principal},...rows],max=Math.max(principal,1),width=660,height=280,left=76,right=22,top=32,bottom=42;
+    const x=i=>left+i/Math.max(1,rows.length)*(width-left-right),y=v=>height-bottom-v/max*(height-top-bottom);
+    let svg=`<svg xmlns="http://www.w3.org/2000/svg" class="chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="กราฟหนี้ลดลงตามงวด ดูตัวเลขได้ในตารางผ่อนชำระ"><text x="${left}" y="18" fill="#60728a" font-size="12">เงินต้นคงเหลือ (บาท)</text>`;
+    for(let i=0;i<=4;i++){const v=max*i/4,yy=y(v);svg+=`<line x1="${left}" y1="${yy}" x2="${width-right}" y2="${yy}" stroke="#dce5ef"/><text x="${left-8}" y="${yy+4}" text-anchor="end" fill="#60728a" font-size="11">${new Intl.NumberFormat('en',{notation:'compact',maximumFractionDigits:1}).format(v)}</text>`;}
+    const points=data.map((r,i)=>`${x(i).toFixed(2)},${y(r.balance).toFixed(2)}`).join(' ');
+    svg+=`<polygon points="${left},${y(0)} ${points} ${x(rows.length)},${y(0)}" fill="#dbeafe" opacity=".65"/><polyline points="${points}" fill="none" stroke="#2563eb" stroke-width="3" stroke-linejoin="round"/>`;
+    const marks=new Set([0,Math.round(rows.length/4),Math.round(rows.length/2),Math.round(rows.length*3/4),rows.length]);for(const i of marks)svg+=`<text x="${x(i)}" y="${height-20}" text-anchor="middle" font-size="12" fill="#60728a">${i}</text>`;
+    return svg+`<text x="${width-right}" y="${height-3}" text-anchor="end" font-size="11" fill="#60728a">งวดที่</text></svg>`;
+}
+function runSimulation(){
+    try{const config={startPrincipal:Number($('sim-principal').value),annualRate:Number($('sim-rate').value),baseDate:$('sim-base').value,rounding:state.rounding,initialAccruedInterest:Number($('sim-accrued').value)};if(!$('sim-accrued').value||!$('sim-principal').value||!$('sim-rate').value||!$('sim-pmt').value)throw new Error('กรุณากรอกข้อมูลให้ครบ');const result=simulate(config,$('sim-first').value,Number($('sim-pmt').value));$('sim-error').hidden=true;$('sim-results').hidden=false;$('sim-res-months').textContent=result.rows.length+' งวด';$('sim-res-interest').textContent=money(result.totalInterest);const last=result.rows.at(-1);$('sim-summary').textContent=last?'หมดประมาณ '+thaiDate(last.date)+' • งวดสุดท้าย '+money(last.amount)+' บาท • ปัดดอกเบี้ย'+(state.rounding==='baht'?'เป็นบาทเต็ม':'สองตำแหน่ง'):'ไม่มีหนี้คงเหลือ';$('sim-chart').innerHTML=chartSVG(config.startPrincipal,result.rows);$('sim-body').innerHTML=result.rows.map(r=>`<tr><td>${escapeHTML(thaiDate(r.date))}</td><td>${r.days}</td><td>${money(r.amount)}</td><td>${money(r.interest)}</td><td>${money(r.balance)}</td></tr>`).join('');}catch(e){$('sim-results').hidden=true;$('sim-error').hidden=false;$('sim-error').textContent=e.message;}
+}
+$('sim-form').onsubmit=e=>{e.preventDefault();runSimulation();};$('sim-current').onclick=()=>{loadSimCurrent();runSimulation();};
+$('pay-date').value=todayLocal();
+// A reload during a request leaves delivery uncertain; never resend automatically.
+state.records.forEach(r=>{if(r.syncStatus==='pending')r.syncStatus='failed';});
+renderTracker();renderCloud();loadSimCurrent();
+</script>
+</body></html>
