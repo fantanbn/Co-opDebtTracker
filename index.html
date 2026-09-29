@@ -174,8 +174,8 @@
         function switchTab(tab) {
             document.getElementById('section-tracker').classList.add('hidden');
             document.getElementById('section-simulator').classList.add('hidden');
-            document.getElementById('tab-tracker').className = 'tab-btn tab-inactive';
-            document.getElementById('tab-simulator').className = 'tab-btn tab-inactive';
+            document.getElementById('tab-tracker').className = 'tab-btn tab-active';
+            document.getElementById('tab-simulator').className = 'tab-btn tab-active';
 
             if (tab === 'tracker') {
                 document.getElementById('section-tracker').classList.remove('hidden');
@@ -188,7 +188,7 @@
             }
         }
 
-        // ==================== 핵심 Logic: Add Record & Webhook ====================
+        // ==================== Logic: Add Record & Webhook ====================
         function addRecord() {
             let date = document.getElementById('pay-date').value;
             let amount = parseFloat(document.getElementById('pay-amount').value);
@@ -230,7 +230,7 @@
                 balance: Number(newBalance.toFixed(2))
             };
 
-            // ใช้ URL ของ Webhook ที่ผู้ใช้ระบุมา
+            // อัปเดต URL ของ Webhook ที่ใหม่ล่าสุด
             const WEBHOOK_URL = "https://hook.eu1.make.com/bowfbulff888832tt6ktk7efu32egppe";
 
             // 4. สั่งยิง Webhook ด้วยคำสั่ง Fetch
