@@ -93,7 +93,7 @@
         </div>
     </div>
 
-    <!-- ==================== SECTION 2: SIMULATOR (ย่อไว้) ==================== -->
+    <!-- ==================== SECTION 2: SIMULATOR ==================== -->
     <div id="section-simulator" class="hidden space-y-6">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="card md:col-span-1 space-y-4 border-t-4 border-blue-500">
@@ -230,31 +230,26 @@
                 balance: Number(newBalance.toFixed(2))
             };
 
-            // 👉👉👉 เปลี่ยน URL บรรทัดนี้ เป็น URL ที่ได้จาก Make.com 👈👈👈
-            const WEBHOOK_URL = "om7avs4wjhd9ja34oqcw5ywgeav6pw1w@hook.eu1.make.com";
+            // ใช้ URL ของ Webhook ที่ผู้ใช้ระบุมา
+            const WEBHOOK_URL = "https://hook.eu1.make.com/om7avs4wjhd9ja34oqcw5ywgeav6pw1w";
 
             // 4. สั่งยิง Webhook ด้วยคำสั่ง Fetch
-            if (WEBHOOK_URL.includes("hook.make.com") && !WEBHOOK_URL.includes("om7avs4wjhd9ja34oqcw5ywgeav6pw1w@hook.eu1.make.com")) {
-                
-                document.getElementById("webhook-status").className = "w-2 h-2 rounded-full bg-yellow-400 animate-pulse";
-                
-                fetch(WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(webhookData)
-                })
-                .then(response => {
-                    document.getElementById("webhook-status").className = "w-2 h-2 rounded-full bg-emerald-400";
-                    console.log("ส่งข้อมูลขึ้น Google Sheets ผ่าน Make.com สำเร็จ");
-                })
-                .catch(error => {
-                    document.getElementById("webhook-status").className = "w-2 h-2 rounded-full bg-red-500";
-                    console.error("Webhook Error:", error);
-                    alert("ไม่สามารถซิงค์ข้อมูลกับระบบ Cloud ได้ แต่ข้อมูลถูกบันทึกลงหน้าเว็บแล้ว");
-                });
-            } else {
-                console.warn("ยังไม่ได้ใส่ Webhook URL จาก Make.com ในโค้ด");
-            }
+            document.getElementById("webhook-status").className = "w-2 h-2 rounded-full bg-yellow-400 animate-pulse";
+            
+            fetch(WEBHOOK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(webhookData)
+            })
+            .then(response => {
+                document.getElementById("webhook-status").className = "w-2 h-2 rounded-full bg-emerald-400";
+                console.log("ส่งข้อมูลขึ้น Google Sheets ผ่าน Make.com สำเร็จ");
+            })
+            .catch(error => {
+                document.getElementById("webhook-status").className = "w-2 h-2 rounded-full bg-red-500";
+                console.error("Webhook Error:", error);
+                alert("ไม่สามารถซิงค์ข้อมูลกับระบบ Cloud ได้ แต่ข้อมูลถูกบันทึกลงหน้าเว็บแล้ว");
+            });
 
             // 5. บันทึกข้อมูลลงหน้าเว็บปกติ
             trackerData.records.push({ date: date, amount: amount });
