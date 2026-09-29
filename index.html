@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบบริหารหนี้ & บันทึกการจ่ายส่วนตัว</title>
+    <title>ระบบบริหารหนี้ (Sync Webhook)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -20,13 +20,11 @@
 </head>
 <body class="p-4 md:p-8 max-w-6xl mx-auto space-y-6">
 
-    <!-- Header -->
     <div class="text-center py-6 bg-slate-900 text-white rounded-2xl shadow-lg relative overflow-hidden">
         <h1 class="text-3xl md:text-4xl font-bold mb-2 text-amber-400">NT Co-op Debt Tracker</h1>
-        <p class="text-slate-300">เครื่องมือบันทึกการจ่ายจริง & จำลองแผนปลดหนี้สหกรณ์</p>
+        <p class="text-slate-300">Sync Data to Google Sheets via Make.com</p>
     </div>
 
-    <!-- Navigation Tabs -->
     <div class="flex justify-center border-b border-slate-200 mb-6">
         <div id="tab-tracker" class="tab-btn tab-active" onclick="switchTab('tracker')">📝 บันทึกจ่ายจริง (My Tracker)</div>
         <div id="tab-simulator" class="tab-btn tab-inactive" onclick="switchTab('simulator')">📊 จำลองแผน (Simulator)</div>
@@ -34,8 +32,6 @@
 
     <!-- ==================== SECTION 1: PERSONAL TRACKER ==================== -->
     <div id="section-tracker" class="space-y-6">
-        
-        <!-- Tracker Summary -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="card md:col-span-1 bg-gradient-to-br from-slate-800 to-slate-900 text-white border-0 shadow-lg">
                 <h2 class="text-lg font-bold text-slate-300 mb-1">ยอดหนี้คงเหลือปัจจุบัน</h2>
@@ -43,18 +39,14 @@
                 <p class="text-sm text-slate-400">จากยอดตั้งต้น: <span id="start-balance-display">377,878</span> บาท</p>
                 <div class="mt-6 pt-4 border-t border-slate-700 flex justify-between">
                     <button onclick="openSettings()" class="text-sm text-slate-300 hover:text-white underline">⚙️ ตั้งค่าเริ่มต้น</button>
-                    <!-- Backup & Restore Buttons -->
-                    <div class="flex gap-2">
-                        <button onclick="exportData()" class="text-sm bg-slate-700 hover:bg-slate-600 px-2 py-1 rounded text-white" title="สำรองข้อมูลลงเครื่อง">💾 สำรองข้อมูล</button>
-                        <label class="text-sm bg-slate-700 hover:bg-slate-600 px-2 py-1 rounded text-white cursor-pointer" title="กู้คืนข้อมูล">
-                            📂 กู้คืน
-                            <input type="file" class="hidden" accept=".json" onchange="importData(event)">
-                        </label>
+                    <!-- Status Webhook -->
+                    <div class="flex gap-2 text-xs items-center bg-slate-700 px-2 py-1 rounded">
+                        <span id="webhook-status" class="w-2 h-2 rounded-full bg-emerald-400"></span> 
+                        <span>Cloud Sync Ready</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Add Payment Form -->
             <div class="card md:col-span-2 border-t-4 border-emerald-500">
                 <h2 class="text-xl font-bold text-slate-800 mb-4">เพิ่มรายการจ่ายเงิน</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -68,19 +60,18 @@
                     </div>
                     <div class="flex items-end">
                         <button onclick="addRecord()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-lg transition shadow-md">
-                            + บันทึกรายการ
+                            + บันทึก & ซิงค์ข้อมูล
                         </button>
                     </div>
                 </div>
-                <p class="text-xs text-emerald-600 mt-3 font-semibold">* ระบบจะดาวน์โหลดไฟล์แบคอัพ (Export) ให้อัตโนมัติทุกครั้งที่กดบันทึกรายการ</p>
+                <p class="text-xs text-emerald-600 mt-3 font-semibold">* เมื่อกดบันทึก ข้อมูลจะถูกยิงผ่าน Webhook ไปเก็บไว้ใน Google Sheets โดยอัตโนมัติ</p>
             </div>
         </div>
 
-        <!-- History Table -->
         <div class="card">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-slate-800">ประวัติการจ่ายเงิน</h2>
-                <button onclick="clearHistory()" class="text-xs text-red-500 hover:text-red-700 underline">ล้างประวัติทั้งหมด</button>
+                <h2 class="text-xl font-bold text-slate-800">ประวัติการจ่ายเงิน (จากหน้าเว็บ)</h2>
+                <button onclick="clearHistory()" class="text-xs text-red-500 hover:text-red-700 underline">ล้างประวัติหน้าเว็บ (ไม่ลบใน Sheet)</button>
             </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full text-sm text-left text-slate-600">
@@ -91,12 +82,9 @@
                             <th class="px-4 py-3 text-right text-rose-500">หักดอกเบี้ย (บาท)</th>
                             <th class="px-4 py-3 text-right text-emerald-600">ตัดเงินต้น (บาท)</th>
                             <th class="px-4 py-3 text-right font-bold text-slate-800">หนี้คงเหลือ (บาท)</th>
-                            <th class="px-4 py-3 text-center">จัดการ</th>
                         </tr>
                     </thead>
-                    <tbody id="history-body">
-                        <!-- History Data will be inserted here -->
-                    </tbody>
+                    <tbody id="history-body"></tbody>
                 </table>
                 <div id="empty-state" class="text-center py-8 text-slate-400 hidden">
                     ยังไม่มีประวัติการจ่ายเงิน เริ่มบันทึกรายการแรกของคุณด้านบนได้เลย!
@@ -105,7 +93,7 @@
         </div>
     </div>
 
-    <!-- ==================== SECTION 2: SIMULATOR ==================== -->
+    <!-- ==================== SECTION 2: SIMULATOR (ย่อไว้) ==================== -->
     <div id="section-simulator" class="hidden space-y-6">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="card md:col-span-1 space-y-4 border-t-4 border-blue-500">
@@ -122,11 +110,8 @@
                     <label class="block text-sm font-semibold text-blue-600 mb-1">ยอดส่งต่อเดือน (บาท)</label>
                     <input type="number" id="sim-pmt" class="input-field border-blue-400 font-bold text-blue-700" value="14180">
                 </div>
-                <button onclick="calculateSimulation()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition shadow-md mt-4">
-                    คำนวณแผน
-                </button>
+                <button onclick="calculateSimulation()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg mt-4">คำนวณแผน</button>
             </div>
-
             <div class="card md:col-span-2 space-y-4 border-t-4 border-slate-500">
                 <div class="grid grid-cols-2 gap-4">
                     <div class="bg-blue-50 p-4 rounded-xl text-center border border-blue-100">
@@ -140,9 +125,7 @@
                 </div>
                 <div>
                     <h3 class="text-lg font-bold text-slate-800 mb-2 mt-4">กราฟการลดลงของหนี้</h3>
-                    <div class="relative h-56 w-full">
-                        <canvas id="simChart"></canvas>
-                    </div>
+                    <div class="relative h-56 w-full"><canvas id="simChart"></canvas></div>
                 </div>
             </div>
         </div>
@@ -162,8 +145,8 @@
                     <input type="number" id="set-rate" class="input-field" step="0.1">
                 </div>
                 <div class="flex justify-end gap-3 mt-6">
-                    <button onclick="closeSettings()" class="px-4 py-2 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg font-medium">ยกเลิก</button>
-                    <button onclick="saveSettings()" class="px-4 py-2 text-white bg-slate-800 hover:bg-slate-900 rounded-lg font-medium">บันทึกค่า</button>
+                    <button onclick="closeSettings()" class="px-4 py-2 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg">ยกเลิก</button>
+                    <button onclick="saveSettings()" class="px-4 py-2 text-white bg-slate-800 hover:bg-slate-900 rounded-lg">บันทึกค่า</button>
                 </div>
             </div>
         </div>
@@ -205,41 +188,82 @@
             }
         }
 
-        // ==================== EXPORT & IMPORT ====================
-        function exportData() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(trackerData));
-            const downloadAnchorNode = document.createElement('a');
-            downloadAnchorNode.setAttribute("href", dataStr);
-            let date = new Date().toISOString().split('T')[0];
-            downloadAnchorNode.setAttribute("download", `debt_backup_${date}.json`);
-            document.body.appendChild(downloadAnchorNode); 
-            downloadAnchorNode.click();
-            downloadAnchorNode.remove();
-        }
+        // ==================== 핵심 Logic: Add Record & Webhook ====================
+        function addRecord() {
+            let date = document.getElementById('pay-date').value;
+            let amount = parseFloat(document.getElementById('pay-amount').value);
+            
+            if (!date || isNaN(amount) || amount <= 0) {
+                alert("กรุณาใส่วันที่และจำนวนเงินให้ถูกต้องครับ");
+                return;
+            }
 
-        function importData(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const importedData = JSON.parse(e.target.result);
-                    if (importedData.startPrincipal !== undefined && Array.isArray(importedData.records)) {
-                        trackerData = importedData;
-                        saveData();
-                        updateTrackerUI();
-                        alert("กู้คืนข้อมูลสำเร็จเรียบร้อยครับ!");
-                    } else {
-                        alert("ไฟล์ที่อัปโหลดไม่ถูกต้อง กรุณาใช้ไฟล์ .json ที่ได้จากการกดสำรองข้อมูลเท่านั้น");
-                    }
-                } catch (err) {
-                    alert("เกิดข้อผิดพลาดในการอ่านไฟล์");
-                }
+            // 1. คำนวณหายอดคงเหลือ (Balance) ล่าสุด ณ ปัจจุบัน
+            let currentBalance = trackerData.startPrincipal;
+            let monthlyRate = (trackerData.annualRate / 100) / 12;
+            
+            trackerData.records.sort((a, b) => new Date(a.date) - new Date(b.date));
+            trackerData.records.forEach(record => {
+                let pastInterest = currentBalance * monthlyRate;
+                let pastPrincipalPaid = record.amount - pastInterest;
+                if (pastPrincipalPaid < 0) { pastPrincipalPaid = 0; }
+                currentBalance -= pastPrincipalPaid;
+                if (currentBalance < 0) currentBalance = 0;
+            });
+
+            // 2. คำนวณดอกเบี้ยและยอดตัดต้น สำหรับ "ยอดเงินก้อนใหม่" นี้
+            let interest = currentBalance * monthlyRate;
+            let principalPaid = amount - interest;
+            if (principalPaid < 0) {
+                interest = amount;
+                principalPaid = 0;
+            }
+            let newBalance = currentBalance - principalPaid;
+            if (newBalance < 0) newBalance = 0;
+
+            // 3. เตรียมข้อมูล (Payload) เพื่อยิงไปที่ Make.com
+            const webhookData = {
+                date: date,
+                amount: amount,
+                interest: Number(interest.toFixed(2)),
+                principal: Number(principalPaid.toFixed(2)),
+                balance: Number(newBalance.toFixed(2))
             };
-            reader.readAsText(file);
-            event.target.value = '';
+
+            // 👉👉👉 เปลี่ยน URL บรรทัดนี้ เป็น URL ที่ได้จาก Make.com 👈👈👈
+            const WEBHOOK_URL = "https://hook.make.com/เปลี่ยนส่วนนี้ให้เป็นของของคุณ";
+
+            // 4. สั่งยิง Webhook ด้วยคำสั่ง Fetch
+            if (WEBHOOK_URL.includes("hook.make.com") && !WEBHOOK_URL.includes("เปลี่ยนส่วนนี้ให้เป็นของของคุณ")) {
+                
+                document.getElementById("webhook-status").className = "w-2 h-2 rounded-full bg-yellow-400 animate-pulse";
+                
+                fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(webhookData)
+                })
+                .then(response => {
+                    document.getElementById("webhook-status").className = "w-2 h-2 rounded-full bg-emerald-400";
+                    console.log("ส่งข้อมูลขึ้น Google Sheets ผ่าน Make.com สำเร็จ");
+                })
+                .catch(error => {
+                    document.getElementById("webhook-status").className = "w-2 h-2 rounded-full bg-red-500";
+                    console.error("Webhook Error:", error);
+                    alert("ไม่สามารถซิงค์ข้อมูลกับระบบ Cloud ได้ แต่ข้อมูลถูกบันทึกลงหน้าเว็บแล้ว");
+                });
+            } else {
+                console.warn("ยังไม่ได้ใส่ Webhook URL จาก Make.com ในโค้ด");
+            }
+
+            // 5. บันทึกข้อมูลลงหน้าเว็บปกติ
+            trackerData.records.push({ date: date, amount: amount });
+            saveData();
+            document.getElementById('pay-amount').value = '';
+            updateTrackerUI();
         }
 
+        // ==================== Tracker UI Update ====================
         function updateTrackerUI() {
             document.getElementById('start-balance-display').innerText = formatMoney(trackerData.startPrincipal);
             
@@ -282,136 +306,62 @@
                         <td class="px-4 py-3 text-right text-rose-500">${formatMoney(interest)}</td>
                         <td class="px-4 py-3 text-right text-emerald-600">${formatMoney(principalPaid)}</td>
                         <td class="px-4 py-3 text-right font-bold text-slate-800">${formatMoney(currentBalance)}</td>
-                        <td class="px-4 py-3 text-center">
-                            <button onclick="deleteRecord(${index})" class="text-red-400 hover:text-red-600 font-bold">✕</button>
-                        </td>
                     </tr>
                 `;
             });
-
             document.getElementById('current-balance').innerText = formatMoney(currentBalance);
         }
 
-        function addRecord() {
-            let date = document.getElementById('pay-date').value;
-            let amount = parseFloat(document.getElementById('pay-amount').value);
-            
-            if (!date || isNaN(amount) || amount <= 0) {
-                alert("กรุณาใส่วันที่และจำนวนเงินให้ถูกต้องครับ");
-                return;
-            }
-
-            trackerData.records.push({ date: date, amount: amount });
-            saveData();
-            document.getElementById('pay-amount').value = '';
-            updateTrackerUI();
-            
-            // เพิ่มระบบ Export อัตโนมัติเมื่อกดบันทึก
-            exportData();
-        }
-
-        function deleteRecord(index) {
-            if (confirm("ต้องการลบรายการนี้ใช่หรือไม่?")) {
-                trackerData.records.splice(index, 1);
-                saveData();
-                updateTrackerUI();
-            }
-        }
-
         function clearHistory() {
-            if (confirm("ล้างประวัติการจ่ายเงินทั้งหมดใช่หรือไม่? (การตั้งค่ายอดเริ่มต้นจะยังอยู่)")) {
+            if (confirm("ล้างประวัติการจ่ายเงินหน้าเว็บใช่หรือไม่? (ประวัติใน Google Sheets จะไม่หายไปไหน)")) {
                 trackerData.records = [];
                 saveData();
                 updateTrackerUI();
             }
         }
 
-        function openSettings() {
-            document.getElementById('set-principal').value = trackerData.startPrincipal;
-            document.getElementById('set-rate').value = trackerData.annualRate;
-            document.getElementById('settings-modal').classList.remove('hidden');
-        }
-
-        function closeSettings() {
-            document.getElementById('settings-modal').classList.add('hidden');
-        }
-
+        function openSettings() { document.getElementById('set-principal').value = trackerData.startPrincipal; document.getElementById('set-rate').value = trackerData.annualRate; document.getElementById('settings-modal').classList.remove('hidden'); }
+        function closeSettings() { document.getElementById('settings-modal').classList.add('hidden'); }
         function saveSettings() {
             let p = parseFloat(document.getElementById('set-principal').value);
             let r = parseFloat(document.getElementById('set-rate').value);
-            if (!isNaN(p) && !isNaN(r)) {
-                trackerData.startPrincipal = p;
-                trackerData.annualRate = r;
-                saveData();
-                updateTrackerUI();
-                closeSettings();
-            }
+            if (!isNaN(p) && !isNaN(r)) { trackerData.startPrincipal = p; trackerData.annualRate = r; saveData(); updateTrackerUI(); closeSettings(); }
         }
 
+        // ==================== Simulator Update ====================
         function calculateSimulation() {
             let principal = parseFloat(document.getElementById('sim-principal').value);
             let rate = parseFloat(document.getElementById('sim-rate').value);
             let pmt = parseFloat(document.getElementById('sim-pmt').value);
-
             let monthlyRate = (rate / 100) / 12;
-            if (pmt <= principal * monthlyRate) {
-                alert("ยอดส่งน้อยกว่าดอกเบี้ยรายเดือน ++กรุณาเพิ่มยอดส่งครับ++");
-                return;
-            }
-
-            let balance = principal;
-            let months = 0;
-            let totalInterest = 0;
-            let chartLabels = [0];
-            let chartData = [balance];
-
+            if (pmt <= principal * monthlyRate) { alert("ยอดส่งน้อยกว่าดอกเบี้ยรายเดือน"); return; }
+            let balance = principal, months = 0, totalInterest = 0, chartLabels = [0], chartData = [balance];
             while (balance > 0 && months < 1200) {
                 months++;
                 let interest = balance * monthlyRate;
                 let principalPaid = pmt - interest;
-
-                if (balance < principalPaid) {
-                    principalPaid = balance;
-                }
-
+                if (balance < principalPaid) { principalPaid = balance; }
                 balance -= principalPaid;
                 totalInterest += interest;
-
-                if (months % 3 === 0 || balance <= 0) { 
-                    chartLabels.push(months);
-                    chartData.push(balance);
-                }
+                if (months % 3 === 0 || balance <= 0) { chartLabels.push(months); chartData.push(balance); }
             }
-
             document.getElementById('sim-res-months').innerText = `${months} เดือน`;
             document.getElementById('sim-res-interest').innerText = formatMoney(totalInterest) + ' ฿';
-
             renderSimChart(chartLabels, chartData);
         }
 
         function renderSimChart(labels, data) {
             const ctx = document.getElementById('simChart').getContext('2d');
             if (simChartInstance) simChartInstance.destroy();
-
             simChartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: labels.map(l => l > 0 ? 'ด.'+l : 'เริ่ม'),
-                    datasets: [{
-                        label: 'ยอดหนี้คงเหลือ',
-                        data: data,
-                        borderColor: '#3b82f6',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.3,
-                        pointRadius: 0
-                    }]
+                    datasets: [{ label: 'ยอดหนี้คงเหลือ', data: data, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', borderWidth: 2, fill: true, tension: 0.3, pointRadius: 0 }]
                 },
                 options: { responsive: true, maintainAspectRatio: false }
             });
         }
-
         updateTrackerUI();
     </script>
 </body>
